@@ -1,9 +1,11 @@
 seq: 004
 method: POST
 host: bsky.social
-endpoint: /xrpc/com.atproto.repo.uploadBlob
+endpoint: /xrpc/com.atproto.server.createSession
 headers:
-  Authorization: <REDACTED>
-  Content-Type: image/png
+  Content-Type: application/json
 body:
-  @license_plate.png
+  {
+    "identifier": "{{BLUESKY_HANDLE}}",
+    "password": "test-app-password"
+  }

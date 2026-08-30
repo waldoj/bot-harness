@@ -1,11 +1,9 @@
 seq: 003
 method: POST
-host: bsky.social
-endpoint: /xrpc/com.atproto.server.createSession
+host: mastodon.social
+endpoint: /api/v1/statuses
 headers:
-  Content-Type: application/json
-body:
-  {
-    "identifier": "{{BLUESKY_HANDLE}}",
-    "password": "test-app-password"
-  }
+  Authorization: <REDACTED>
+forms:
+  status=
+  media_ids[]=110000000000000001

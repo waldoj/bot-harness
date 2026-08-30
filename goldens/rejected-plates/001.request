@@ -1,10 +1,9 @@
 seq: 001
 method: POST
 host: mastodon.social
-endpoint: /api/v1/media
+endpoint: /api/v2/media
 headers:
   Authorization: <REDACTED>
-  Content-Type: multipart/form-data
 forms:
   file=@license_plate.png
   description=A Virginia license plate reading 
