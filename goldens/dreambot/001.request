@@ -1,0 +1,6 @@
+seq: 001
+method: POST
+host: mastodon.social
+endpoint: /api/v1/statuses/110000000000000042/reblog
+headers:
+  Authorization: <REDACTED>

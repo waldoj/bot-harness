@@ -1,0 +1,11 @@
+seq: 003
+method: POST
+host: bsky.social
+endpoint: /xrpc/com.atproto.server.createSession
+headers:
+  Content-Type: application/json
+body:
+  {
+    "identifier": "{{BLUESKY_HANDLE}}",
+    "password": "test-app-password"
+  }

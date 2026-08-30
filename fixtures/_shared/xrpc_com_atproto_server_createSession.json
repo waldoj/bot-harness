@@ -1,0 +1,1 @@
+{"accessJwt":"test.access.jwt","refreshJwt":"test.refresh.jwt","handle":"testbot.bsky.social","did":"did:plc:testbotdid000000000000","didDoc":{"service":[{"id":"#atproto_pds","type":"AtprotoPersonalDataServer","serviceEndpoint":"https://test.host.bsky.network"}]}}

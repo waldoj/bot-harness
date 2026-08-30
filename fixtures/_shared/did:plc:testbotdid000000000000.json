@@ -1,0 +1,1 @@
+{"id":"did:plc:testbotdid000000000000","service":[{"id":"#atproto_pds","type":"AtprotoPersonalDataServer","serviceEndpoint":"https://test.host.bsky.network"}]}

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Freezes the clock so that createdAt timestamps are byte-stable across runs.
+# Delegates every other form to the real date, since bots also do relative-date
+# arithmetic (covid-wastewater checks data freshness with `date -d`).
+set -u
+FROZEN="${HARNESS_FROZEN_TIME:-2026-01-15T12:00:00Z}"
+REAL_DATE=""
+for d in /bin/date /usr/bin/date; do [ -x "$d" ] && REAL_DATE="$d" && break; done
+
+# The UTC ISO-8601 form used for post timestamps
+if [ "${1:-}" = "-u" ]; then
+    case "${2:-}" in
+        +%Y-%m-%dT%H:%M:%SZ|+%Y-%m-%dT%H:%M:%S%Z) printf '%s' "$FROZEN"; exit 0 ;;
+    esac
+fi
+exec "$REAL_DATE" "$@"

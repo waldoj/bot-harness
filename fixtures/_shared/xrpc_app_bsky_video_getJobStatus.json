@@ -1,0 +1,1 @@
+{"jobStatus":{"jobId":"test-job-id-0001","state":"JOB_STATE_COMPLETED","blob":{"$type":"blob","ref":{"$link":"bafkreitestvideoblobaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},"mimeType":"video/mp4","size":987654}}}

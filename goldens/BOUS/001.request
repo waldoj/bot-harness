@@ -1,0 +1,9 @@
+seq: 001
+method: POST
+host: mastodon.social
+endpoint: /api/v2/media
+headers:
+  Authorization: <REDACTED>
+forms:
+  file=@30_men.mp4
+  description=30 men

@@ -1,0 +1,6 @@
+seq: 002
+method: GET
+host: bsky.social
+endpoint: /xrpc/com.atproto.server.getSession
+headers:
+  Authorization: <REDACTED>

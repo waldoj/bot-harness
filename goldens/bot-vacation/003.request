@@ -1,0 +1,9 @@
+seq: 003
+method: GET
+host: bsky.social
+endpoint: /xrpc/com.atproto.server.getServiceAuth
+headers:
+  Authorization: <REDACTED>
+body:
+  aud=did:web:test.host.bsky.network
+  lxm=com.atproto.repo.uploadBlob

@@ -1,0 +1,7 @@
+seq: 001
+method: POST
+host: data.cdc.gov
+endpoint: /resource/atcp-73re.json
+body:
+  $select=max(week_end) as latest
+  $where=pathogen_target='SARS-CoV-2'

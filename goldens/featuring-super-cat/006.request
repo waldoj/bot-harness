@@ -1,0 +1,6 @@
+seq: 006
+method: GET
+host: bsky.social
+endpoint: /xrpc/com.atproto.server.getServiceAuth
+headers:
+  Authorization: <REDACTED>

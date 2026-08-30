@@ -1,0 +1,9 @@
+seq: 001
+method: POST
+host: mastodon.social
+endpoint: /api/v1/media
+headers:
+  Authorization: <REDACTED>
+  Content-Type: multipart/form-data
+forms:
+  file=@1.m4v

@@ -1,0 +1,9 @@
+seq: 001
+method: POST
+host: mastodon.social
+endpoint: /api/v2/media
+headers:
+  Authorization: <REDACTED>
+forms:
+  file=@Back in Black.mp4
+  description="Back in Black (feat. Super Cat)"

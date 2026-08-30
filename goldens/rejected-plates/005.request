@@ -1,0 +1,37 @@
+seq: 005
+method: POST
+host: bsky.social
+endpoint: /xrpc/com.atproto.repo.createRecord
+headers:
+  Authorization: <REDACTED>
+  Content-Type: application/json
+body:
+  {
+    "collection": "app.bsky.feed.post",
+    "record": {
+      "$type": "app.bsky.feed.post",
+      "createdAt": "2026-01-15T12:00:00Z",
+      "embed": {
+        "$type": "app.bsky.embed.images",
+        "images": [
+          {
+            "alt": "A Virginia license plate reading ",
+            "aspectRatio": {
+              "height": 176,
+              "width": 350
+            },
+            "image": {
+              "$type": "blob",
+              "mimeType": "image/png",
+              "ref": {
+                "$link": "bafkreitestblobrefaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "size": 12345
+            }
+          }
+        ]
+      },
+      "text": ""
+    },
+    "repo": "{{BLUESKY_HANDLE}}"
+  }

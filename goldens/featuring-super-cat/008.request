@@ -1,0 +1,4 @@
+seq: 008
+method: GET
+host: video.bsky.app
+endpoint: /xrpc/app.bsky.video.getJobStatus

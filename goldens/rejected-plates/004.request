@@ -1,0 +1,9 @@
+seq: 004
+method: POST
+host: bsky.social
+endpoint: /xrpc/com.atproto.repo.uploadBlob
+headers:
+  Authorization: <REDACTED>
+  Content-Type: image/png
+body:
+  @license_plate.png

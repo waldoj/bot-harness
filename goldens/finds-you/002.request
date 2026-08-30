@@ -1,0 +1,11 @@
+seq: 002
+method: POST
+host: bsky.social
+endpoint: /xrpc/com.atproto.server.createSession
+headers:
+  Content-Type: application/json
+body:
+  {
+    "identifier": "USERNAME_HERE",
+    "password": "test-app-password"
+  }

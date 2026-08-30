@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Passes through to the real sort, but strips -R/--random-sort so that
+# selection is deterministic under test. Every other sort use (botgov's domain
+# diffing, BOUS's caption ordering) must behave normally, so only the random
+# flag is touched.
+set -u
+REAL_SORT=""
+for s in /usr/bin/sort /bin/sort; do [ -x "$s" ] && REAL_SORT="$s" && break; done
+ARGS=()
+for arg in "$@"; do
+    case "$arg" in
+        -R|--random-sort|--sort=random) ;;
+        *) ARGS+=("$arg") ;;
+    esac
+done
+exec "$REAL_SORT" ${ARGS[@]+"${ARGS[@]}"}

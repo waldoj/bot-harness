@@ -1,0 +1,8 @@
+seq: 002
+method: POST
+host: data.cdc.gov
+endpoint: /resource/atcp-73re.json
+body:
+  $where=pathogen_target='SARS-CoV-2' AND week_end='2026-01-10'
+  $select=state_territory,site,site_wval
+  $limit=50000

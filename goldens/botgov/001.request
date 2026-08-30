@@ -1,0 +1,4 @@
+seq: 001
+method: GET
+host: raw.githubusercontent.com
+endpoint: /cisagov/dotgov-data/main/current-full.csv

@@ -1,0 +1,11 @@
+seq: 004
+method: POST
+host: bsky.social
+endpoint: /xrpc/com.atproto.server.createSession
+headers:
+  Content-Type: application/json
+body:
+  {
+    "identifier": "feat-super-cat.bsky.social",
+    "password": "test-app-password"
+  }

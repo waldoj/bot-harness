@@ -1,0 +1,11 @@
+seq: 001
+method: POST
+host: bsky.social
+endpoint: /xrpc/com.atproto.server.createSession
+headers:
+  Content-Type: application/json
+body:
+  {
+    "identifier": "xmasvacation.bsky.social",
+    "password": "test-app-password"
+  }

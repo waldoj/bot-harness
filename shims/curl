@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+#
+# Recording/replaying stand-in for curl.
+#
+# Bots call curl exactly as they do in production; this shim records the
+# request to $HARNESS_CAPTURE and prints a canned response, so no traffic
+# leaves the machine and the bot's own code is never modified.
+#
+# A real file on PATH rather than a shell function, because several bots
+# preflight their dependencies with `command -v curl`, which a function
+# would not satisfy.
+
+set -u
+
+CAPTURE_DIR="${HARNESS_CAPTURE:?HARNESS_CAPTURE must be set}"
+FIXTURE_DIR="${HARNESS_FIXTURES:?HARNESS_FIXTURES must be set}"
+
+mkdir -p "$CAPTURE_DIR"
+
+# Monotonic request counter, so requests are recorded in invocation order
+SEQ_FILE="${CAPTURE_DIR}/.seq"
+if [ -f "$SEQ_FILE" ]; then
+    SEQ=$(( $(cat "$SEQ_FILE") + 1 ))
+else
+    SEQ=1
+fi
+printf '%s' "$SEQ" > "$SEQ_FILE"
+SEQ_PADDED=$(printf '%03d' "$SEQ")
+
+# Parse the arguments we care about. curl's surface is large; these are the
+# forms the bots actually use (verified across all nine post scripts).
+METHOD=""
+URL=""
+DATA=""
+HEADERS=""
+FORMS=""
+WRITE_OUT=""
+OUTPUT=""
+FAIL_MODE="no"
+GET_MODE="no"
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -X|--request)        METHOD="$2"; shift 2 ;;
+        -H|--header)         HEADERS="${HEADERS}${2}"$'\n'; shift 2 ;;
+        -d|--data|--data-raw|--data-binary|--data-ascii)
+                             DATA="${DATA}${2}"$'\n'; shift 2 ;;
+        --data-urlencode)    DATA="${DATA}${2}"$'\n'; shift 2 ;;
+        -F|--form)           FORMS="${FORMS}${2}"$'\n'; shift 2 ;;
+        -w|--write-out)      WRITE_OUT="$2"; shift 2 ;;
+        -o|--output)         OUTPUT="$2"; shift 2 ;;
+        -G|--get)            GET_MODE="yes"; shift ;;
+        -f|--fail)           FAIL_MODE="yes"; shift ;;
+        -s|--silent|-S|--show-error|-L|--location|--compressed)
+                             shift ;;
+        -sf|-sS|-fsS|-sfS)   FAIL_MODE="yes"; shift ;;
+        --*)                 shift ;;
+        -*)                  shift ;;
+        *)                   [ -z "$URL" ] && URL="$1"; shift ;;
+    esac
+done
+
+[ -z "$METHOD" ] && METHOD="GET"
+[ -n "$DATA$FORMS" ] && [ "$METHOD" = "GET" ] && [ "$GET_MODE" = "no" ] && METHOD="POST"
+
+# Normalize the URL to an endpoint key: strip scheme, host and query string so
+# that a request can be matched to a fixture regardless of instance or params.
+ENDPOINT=$(printf '%s' "$URL" | sed -e 's|^https\{0,1\}://[^/]*||' -e 's|?.*$||')
+HOST=$(printf '%s' "$URL" | sed -e 's|^https\{0,1\}://||' -e 's|/.*$||')
+
+# Record the request. Authorization values are redacted: goldens are committed,
+# and the point of comparison is the request's shape, not its credentials.
+{
+    printf 'seq: %s\n' "$SEQ_PADDED"
+    printf 'method: %s\n' "$METHOD"
+    printf 'host: %s\n' "$HOST"
+    printf 'endpoint: %s\n' "$ENDPOINT"
+    if [ -n "$HEADERS" ]; then
+        printf 'headers:\n'
+        printf '%s' "$HEADERS" | sed \
+            -e 's/^\(Authorization:[[:space:]]*Bearer\)[[:space:]].*/\1 <REDACTED>/I' \
+            -e 's/^\(Authorization:\)[[:space:]].*/\1 <REDACTED>/I' \
+            | sed 's/^/  /'
+    fi
+    if [ -n "$FORMS" ]; then
+        printf 'forms:\n'
+        printf '%s' "$FORMS" | sed 's/^/  /'
+    fi
+    if [ -n "$DATA" ]; then
+        printf 'body:\n'
+        # Pretty-print JSON bodies so golden diffs are readable and stable.
+        if printf '%s' "$DATA" | jq empty >/dev/null 2>&1; then
+            printf '%s' "$DATA" | jq -S . | sed 's/^/  /'
+        else
+            printf '%s' "$DATA" | sed 's/^/  /'
+        fi
+    fi
+} > "${CAPTURE_DIR}/${SEQ_PADDED}.request"
+
+# Pick a response fixture. Most specific match wins:
+#   <fixture_dir>/<bot>/<endpoint-slug>.<seq>.json   (per-call override)
+#   <fixture_dir>/<bot>/<endpoint-slug>.json         (per-bot)
+#   <fixture_dir>/_shared/<endpoint-slug>.json       (shared default)
+SLUG=$(printf '%s' "$ENDPOINT" | sed -e 's|^/||' -e 's|[/.]|_|g')
+RESPONSE=""
+for candidate in \
+    "${FIXTURE_DIR}/${HARNESS_BOT:-_none}/${SLUG}.${SEQ_PADDED}.json" \
+    "${FIXTURE_DIR}/${HARNESS_BOT:-_none}/${SLUG}.json" \
+    "${FIXTURE_DIR}/_shared/${SLUG}.json" ; do
+    if [ -f "$candidate" ]; then RESPONSE="$candidate"; break; fi
+done
+
+# An unmatched endpoint is a harness gap, not a bot failure. Say so loudly on
+# stderr, but still return valid empty JSON so the run continues far enough to
+# reveal any further unmatched calls in the same pass.
+if [ -z "$RESPONSE" ]; then
+    printf 'HARNESS: no fixture for %s %s (slug: %s, bot: %s)\n' \
+        "$METHOD" "$ENDPOINT" "$SLUG" "${HARNESS_BOT:-unset}" >&2
+    printf 'HARNESS: add %s/%s/%s.json\n' \
+        "$FIXTURE_DIR" "${HARNESS_BOT:-<bot>}" "$SLUG" >&2
+    BODY='{}'
+else
+    BODY=$(cat "$RESPONSE")
+fi
+
+# Allow a fixture to drive a failure path: a file named <slug>.status holds an
+# HTTP status, letting tests exercise 401/429/500 handling.
+STATUS="200"
+if [ -n "$RESPONSE" ] && [ -f "${RESPONSE%.json}.status" ]; then
+    STATUS=$(cat "${RESPONSE%.json}.status")
+fi
+
+# Honour -w '%{http_code}', which BOUS uses to poll for media processing.
+if [ -n "$WRITE_OUT" ]; then
+    OUT=$(printf '%s' "$WRITE_OUT" | sed "s/%{http_code}/${STATUS}/g")
+else
+    OUT="$BODY"
+fi
+
+if [ -n "$OUTPUT" ]; then
+    printf '%s' "$BODY" > "$OUTPUT"
+    [ -n "$WRITE_OUT" ] && printf '%s' "$OUT"
+else
+    printf '%s' "$OUT"
+fi
+
+# -f/--fail makes curl exit 22 on HTTP >= 400; several bots rely on this.
+if [ "$FAIL_MODE" = "yes" ] && [ "$STATUS" -ge 400 ]; then
+    exit 22
+fi
+exit 0

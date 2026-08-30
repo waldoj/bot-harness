@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Stand-in for the AWS CLI. Serves `s3 ls` from a fixture listing and `s3 cp`
+# from local sample media, so no S3 access or network is needed.
+set -u
+FIXTURE_DIR="${HARNESS_FIXTURES:?}"
+BOT="${HARNESS_BOT:-_none}"
+
+if [ "${1:-}" = "s3" ] && [ "${2:-}" = "ls" ]; then
+    LISTING="${FIXTURE_DIR}/${BOT}/s3-listing.txt"
+    [ -f "$LISTING" ] || LISTING="${FIXTURE_DIR}/_shared/s3-listing.txt"
+    if [ -f "$LISTING" ]; then cat "$LISTING"; exit 0; fi
+    printf 'HARNESS: no s3-listing.txt fixture for bot %s\n' "$BOT" >&2
+    exit 1
+fi
+
+if [ "${1:-}" = "s3" ] && [ "${2:-}" = "cp" ]; then
+    SRC="${3:-}"; DEST="${4:-}"
+    BASE=$(basename "$SRC")
+    EXT="${BASE##*.}"
+    # Serve a same-extension sample so ffprobe and upload paths see real media
+    for candidate in \
+        "${FIXTURE_DIR}/${BOT}/media/${BASE}" \
+        "${FIXTURE_DIR}/${BOT}/media/sample.${EXT}" \
+        "${FIXTURE_DIR}/_shared/media/sample.${EXT}" ; do
+        if [ -f "$candidate" ]; then cp "$candidate" "$DEST"; exit 0; fi
+    done
+    # Script-excerpt sidecars are genuinely optional in BOUS; absence is normal
+    if [ "$EXT" = "txt" ]; then exit 1; fi
+    printf 'HARNESS: no media fixture for %s (bot %s)\n' "$BASE" "$BOT" >&2
+    exit 1
+fi
+exit 0

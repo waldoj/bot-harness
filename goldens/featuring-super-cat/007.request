@@ -1,0 +1,9 @@
+seq: 007
+method: POST
+host: video.bsky.app
+endpoint: /xrpc/app.bsky.video.uploadVideo
+headers:
+  Authorization: <REDACTED>
+  Content-Type: video/mp4
+body:
+  @Back in Black.mp4

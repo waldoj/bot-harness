@@ -1,0 +1,8 @@
+.DS_Store
+*.bak
+
+# Captured stdout/stderr are diagnostic only: they are not part of the request
+# contract that verify.sh compares, and `set -x` bots trace credential values
+# into them. The .request files are the goldens.
+goldens/*/stdout.txt
+goldens/*/stderr.txt

@@ -1,0 +1,9 @@
+seq: 003
+method: POST
+host: mastodon.social
+endpoint: /api/v1/statuses
+headers:
+  Authorization: <REDACTED>
+forms:
+  status="Back in Black (feat. Super Cat)"
+  media_ids[]=110000000000000001

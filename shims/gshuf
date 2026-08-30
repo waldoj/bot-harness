@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Deterministic stand-in for shuf: returns the first line(s) rather than a
+# random one, so clip selection is reproducible. Which clip is chosen is not
+# what the goldens are testing; the shape of the resulting post is.
+set -u
+N=1
+FILE=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -n) N="$2"; shift 2 ;;
+        -n*) N="${1#-n}"; shift ;;
+        -*) shift ;;
+        *) FILE="$1"; shift ;;
+    esac
+done
+if [ -n "$FILE" ]; then head -n "$N" "$FILE"; else head -n "$N"; fi

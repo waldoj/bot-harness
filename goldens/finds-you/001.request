@@ -1,0 +1,8 @@
+seq: 001
+method: POST
+host: mastodon.social
+endpoint: /api/v1/statuses
+headers:
+  Authorization: <REDACTED>
+forms:
+  status=I hope this email finds you well.

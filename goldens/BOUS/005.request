@@ -1,0 +1,4 @@
+seq: 005
+method: GET
+host: plc.directory
+endpoint: /did:plc:testbotdid000000000000

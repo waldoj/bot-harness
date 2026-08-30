@@ -1,0 +1,28 @@
+seq: 005
+method: POST
+host: bsky.social
+endpoint: /xrpc/com.atproto.repo.createRecord
+headers:
+  Authorization: <REDACTED>
+  Content-Type: application/json
+body:
+  {
+    "collection": "app.bsky.feed.post",
+    "record": {
+      "createdAt": "2026-01-15T12:00:00Z",
+      "embed": {
+        "$type": "app.bsky.embed.video",
+        "alt": "A clip from National Lampoon’s Christmas Vacation",
+        "video": {
+          "$type": "blob",
+          "mimeType": "video/mp4",
+          "ref": {
+            "$link": "bafkreitestvideoblobaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "size": 987654
+        }
+      },
+      "text": ""
+    },
+    "repo": "xmasvacation.bsky.social"
+  }

@@ -1,0 +1,6 @@
+seq: 002
+method: GET
+host: mastodon.social
+endpoint: /api/v1/media/110000000000000001
+headers:
+  Authorization: <REDACTED>

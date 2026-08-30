@@ -1,0 +1,9 @@
+seq: 002
+method: POST
+host: mastodon.social
+endpoint: /api/v1/statuses
+headers:
+  Authorization: <REDACTED>
+body:
+  media_ids[]=110000000000000001
+  status=
