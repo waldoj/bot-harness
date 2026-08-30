@@ -6,3 +6,8 @@
 # into them. The .request files are the goldens.
 goldens/*/stdout.txt
 goldens/*/stderr.txt
+
+# The shared library writes its filesystem log inside the capture directory,
+# so that a test run never appends to the real one. Like stdout and stderr,
+# it is diagnostic rather than part of the request contract.
+goldens/*/logs/
