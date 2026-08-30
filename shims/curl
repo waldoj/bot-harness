@@ -17,13 +17,26 @@ FIXTURE_DIR="${HARNESS_FIXTURES:?HARNESS_FIXTURES must be set}"
 
 mkdir -p "$CAPTURE_DIR"
 
-# Monotonic request counter, so requests are recorded in invocation order
+# Monotonic request counter, so requests are recorded in invocation order.
+#
+# Claiming a number must be atomic. Bots invoke curl inside $(...), and a
+# command substitution can still be finishing while the next call starts, so a
+# plain read-increment-write races: two calls read the same value, both write
+# the same .request file, and one request vanishes from the capture. That made
+# `finds-you` reorder its last two requests in roughly one run in six.
+#
+# `mkdir` is the atomic primitive available to a POSIX shell: it succeeds for
+# exactly one caller and fails for the rest, with no lock file left behind if
+# the shim is killed. Each caller walks up from the last known number until it
+# creates a directory nobody else holds, and that number is its own.
 SEQ_FILE="${CAPTURE_DIR}/.seq"
-if [ -f "$SEQ_FILE" ]; then
-    SEQ=$(( $(cat "$SEQ_FILE") + 1 ))
-else
-    SEQ=1
-fi
+SEQ=$(cat "$SEQ_FILE" 2>/dev/null || printf '0')
+while :; do
+    SEQ=$(( SEQ + 1 ))
+    if mkdir "${CAPTURE_DIR}/.seq.${SEQ}" 2>/dev/null; then
+        break
+    fi
+done
 printf '%s' "$SEQ" > "$SEQ_FILE"
 SEQ_PADDED=$(printf '%03d' "$SEQ")
 
