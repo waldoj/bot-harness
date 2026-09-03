@@ -1,9 +1,9 @@
-seq: 001
+seq: 003
 method: POST
 host: mastodon.social
-endpoint: /api/v2/media
+endpoint: /api/v1/statuses
 headers:
   Authorization: <REDACTED>
 forms:
-  file=@1.m4v
-  description=
+  status=
+  media_ids[]=110000000000000001

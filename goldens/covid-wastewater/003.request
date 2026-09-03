@@ -4,7 +4,7 @@ host: mastodon.social
 endpoint: /api/v1/statuses
 headers:
   Authorization: <REDACTED>
-body:
+forms:
   status=For the week ending 2026-01-10
   
   Low: CA, FL, VA

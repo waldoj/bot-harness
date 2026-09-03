@@ -6,6 +6,6 @@ headers:
   Content-Type: application/json
 body:
   {
-    "identifier": "USERNAME_HERE",
+    "identifier": "thisemailfindsyou.bsky.social",
     "password": "test-app-password"
   }

@@ -19,8 +19,11 @@ OUT_DIR="${2:-${HARNESS_ROOT}/goldens/${BOT}}"
 SRC="${REPO_ROOT}/${BOT}"
 [ -d "$SRC" ] || { echo "No such bot repo: $SRC" >&2; exit 1; }
 
+# Locate the bot's entry point. Most are post.sh; the rest are named for what
+# they do. Ordered most-common first, and `poster.sh` before `mastobot.sh` so
+# that a bot carrying both -- a rename not yet cleaned up -- runs the new one.
 ENTRY=""
-for candidate in post.sh bot.sh mastobot.sh; do
+for candidate in post.sh bot.sh poster.sh mastobot.sh; do
     [ -f "${SRC}/${candidate}" ] && ENTRY="$candidate" && break
 done
 [ -n "$ENTRY" ] || { echo "No entry script found in $SRC" >&2; exit 1; }
@@ -86,7 +89,14 @@ export HARNESS_FROZEN_TIME="${HARNESS_FROZEN_TIME:-2026-01-15T12:00:00Z}"
 
 # Shims first on PATH. They are real files, so `command -v` preflight checks
 # in the bots still succeed.
-export PATH="${HARNESS_ROOT}/shims:${PATH}"
+#
+# The common package prefixes are appended, because the harness is often run
+# from an environment with a minimal PATH -- an editor, a CI job, an agent --
+# where Homebrew's bin is absent and ffmpeg/ffprobe/aws cannot be found. The
+# bots then fail their preflight and capture nothing, which looks exactly like
+# a regression. Appending rather than prepending leaves the caller's own
+# choices ahead of these.
+export PATH="${HARNESS_ROOT}/shims:${PATH}:/opt/homebrew/bin:/usr/local/bin:/opt/local/bin"
 
 # Pin the locale the way BOUS does, so character counting matches production
 if locale -a 2>/dev/null | grep -qxi 'C\.UTF-*8'; then

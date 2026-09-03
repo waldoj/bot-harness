@@ -1,9 +1,6 @@
 seq: 002
-method: POST
+method: GET
 host: mastodon.social
-endpoint: /api/v1/statuses
+endpoint: /api/v1/media/110000000000000001
 headers:
   Authorization: <REDACTED>
-forms:
-  status=" "
-  media_ids[]=110000000000000001

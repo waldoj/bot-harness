@@ -13,4 +13,58 @@ if [ "${1:-}" = "-u" ]; then
         +%Y-%m-%dT%H:%M:%SZ|+%Y-%m-%dT%H:%M:%S%Z) printf '%s' "$FROZEN"; exit 0 ;;
     esac
 fi
+
+# `date -u --iso-8601=seconds -d "<n> hours ago"`, the GNU form dreambot uses
+# to compute its search cutoff on Linux. BSD date has no -d at all, so without
+# this the Linux half of that script cannot be exercised here -- and Linux is
+# what production runs.
+#
+# Deliberately narrow: only this exact shape is intercepted. An earlier attempt
+# matched any `-d` or any "ago", which caught covid-wastewater's
+# `date -d "$WEEK" +%s` and made one side of its freshness comparison work
+# while the other still failed. Leaving both to fail identically, as they did
+# before, is the behaviour its goldens record.
+# The BSD relative form, `date -v-12H -u +FORMAT`, which dreambot takes on
+# macOS. Frozen for the same reason: a cutoff computed from the real clock
+# makes fixture timestamps fall outside the window, so the filter silently
+# matches nothing and the script looks broken when it is not.
+if [ "${1:-}" = "-v" ] || case "${1:-}" in -v-*) true ;; *) false ;; esac; then
+    if [ "${1:-}" = "-v" ]; then ADJ="${2:-}"; else ADJ="${1#-v}"; fi
+    OUT_FMT=""
+    for arg in "$@"; do
+        case "$arg" in +*) OUT_FMT="$arg" ;; esac
+    done
+    [ -n "$OUT_FMT" ] || OUT_FMT="+%Y-%m-%dT%H:%M:%SZ"
+
+    # ADJ carries its own sign ("-12H"); passing it through unchanged is what
+    # keeps the adjustment, and stripping the minus silently subtracts nothing
+    RESULT=$("$REAL_DATE" -u -j -v "$ADJ" \
+        -f '%Y-%m-%dT%H:%M:%SZ' "$FROZEN" "$OUT_FMT" 2>/dev/null)
+    if [ -n "$RESULT" ]; then
+        printf '%s' "$RESULT"
+        exit 0
+    fi
+fi
+
+if [ "${1:-}" = "-u" ] && [ "${2:-}" = "--iso-8601=seconds" ] && [ "${3:-}" = "-d" ]; then
+    NUM=$(printf '%s' "${4:-}" | sed -n 's/^\([0-9][0-9]*\)[[:space:]].*ago$/\1/p')
+    case "${4:-}" in
+        *hour*) UNIT="H" ;;
+        *day*)  UNIT="d" ;;
+        *min*)  UNIT="M" ;;
+        *)      UNIT="" ;;
+    esac
+
+    if [ -n "$NUM" ] && [ -n "$UNIT" ]; then
+        # -v must precede -f, or BSD date ignores the adjustment
+        RESULT=$("$REAL_DATE" -u -j -v "-${NUM}${UNIT}" \
+            -f '%Y-%m-%dT%H:%M:%SZ' "$FROZEN" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null)
+        if [ -n "$RESULT" ]; then
+            # --iso-8601=seconds writes +00:00 where Z would go
+            printf '%s' "${RESULT%Z}+00:00"
+            exit 0
+        fi
+    fi
+fi
+
 exec "$REAL_DATE" "$@"

@@ -6,7 +6,6 @@ headers:
   Authorization: <REDACTED>
 forms:
   status=The following .gov domains have been registered in the past 24 hours:
-  "domain
   anothernew.gov
   existing.gov
   newagency.gov

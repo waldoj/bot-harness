@@ -59,7 +59,25 @@ while [ $# -gt 0 ]; do
         -d|--data|--data-raw|--data-binary|--data-ascii)
                              DATA="${DATA}${2}"$'\n'; shift 2 ;;
         --data-urlencode)    DATA="${DATA}${2}"$'\n'; shift 2 ;;
-        -F|--form)           FORMS="${FORMS}${2}"$'\n'; shift 2 ;;
+        -F|--form)
+                             # `name=<path` tells curl to read the value from a
+                             # file, which is how a long status body is kept off
+                             # the command line. Expand it here so the golden
+                             # records the content rather than a temp path that
+                             # differs on every run.
+                             case "$2" in
+                                 *=\<*)
+                                     _fname="${2%%=<*}"
+                                     _fpath="${2#*=<}"
+                                     if [ -r "$_fpath" ]; then
+                                         FORMS="${FORMS}${_fname}=$(cat "$_fpath")"$'\n'
+                                     else
+                                         FORMS="${FORMS}${2}"$'\n'
+                                     fi
+                                     ;;
+                                 *) FORMS="${FORMS}${2}"$'\n' ;;
+                             esac
+                             shift 2 ;;
         -w|--write-out)      WRITE_OUT="$2"; shift 2 ;;
         -o|--output)         OUTPUT="$2"; shift 2 ;;
         -G|--get)            GET_MODE="yes"; shift ;;
