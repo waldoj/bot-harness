@@ -161,18 +161,24 @@ if [ -n "$RESPONSE" ] && [ -f "${RESPONSE%.json}.status" ]; then
     STATUS=$(cat "${RESPONSE%.json}.status")
 fi
 
-# Honour -w '%{http_code}', which BOUS uses to poll for media processing.
+# Honor -w '%{http_code}'. Real curl writes the response body to stdout (or
+# -o's file) and then appends the write-out string to whichever of those the
+# body went to -- it does not replace the body. -o /dev/null -w '%{http_code}'
+# is how masto_await_media polls for status alone; http_request instead omits
+# -o so it gets both, exactly as real curl would return them concatenated.
+WRITTEN=""
 if [ -n "$WRITE_OUT" ]; then
-    OUT=$(printf '%s' "$WRITE_OUT" | sed "s/%{http_code}/${STATUS}/g")
-else
-    OUT="$BODY"
+    # Real curl treats \n and \t in a -w format string as newline/tab, not
+    # literal backslash-n. http_request relies on \n to separate the body from
+    # the status it appends, so this has to be replicated here.
+    WRITTEN=$(printf '%s' "$WRITE_OUT" | sed -e "s/%{http_code}/${STATUS}/g" -e 's/\\n/\n/g' -e 's/\\t/\t/g')
 fi
 
 if [ -n "$OUTPUT" ]; then
     printf '%s' "$BODY" > "$OUTPUT"
-    [ -n "$WRITE_OUT" ] && printf '%s' "$OUT"
+    printf '%s' "$WRITTEN"
 else
-    printf '%s' "$OUT"
+    printf '%s%s' "$BODY" "$WRITTEN"
 fi
 
 # -f/--fail makes curl exit 22 on HTTP >= 400; several bots rely on this.

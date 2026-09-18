@@ -75,6 +75,22 @@ check "loads a 600 file under GNU stat" "https://mastodon.social" \
 
 rm -rf "$GNUSTAT" "$SECRETS600"
 
+# bsky_await_video builds an optional auth array, and expanding an empty array
+# under `set -u` aborts on bash 3.2 -- which is what macOS ships. Several bots
+# run with `set -euo pipefail`, so this killed featuring-super-cat's poll
+# outright. Exercised in a subshell with -u on and no jwt argument.
+(
+    set -u
+    . "$LIB/core.sh"
+    . "$LIB/bluesky.sh"
+    # No fixtures here, so the call fails at curl -- the point is that it gets
+    # that far rather than dying on an unbound variable
+    BSKY_POLL_ATTEMPTS=1 BSKY_POLL_DELAY=0 \
+        bsky_await_video "testjob" > /dev/null 2>/tmp/botlib-setu-err
+) || true
+check "empty auth array survives set -u" "no" \
+    "$(grep -q 'unbound variable' /tmp/botlib-setu-err 2>/dev/null && echo yes || echo no)"
+
 echo "pds parsing:"
 . "$LIB/bluesky.sh"
 SESSION='{"accessJwt":"t","did":"did:plc:x","didDoc":{"service":[{"id":"#atproto_pds","type":"AtprotoPersonalDataServer","serviceEndpoint":"https://test.host.bsky.network"}]}}'
@@ -82,6 +98,43 @@ check "extracts host" "test.host.bsky.network" "$(bsky_pds_host_from_session "$S
 check "extracts did" "did:plc:x" "$(bsky_did "$SESSION")"
 bsky_pds_host_from_session '{"accessJwt":"t"}' >/dev/null 2>&1
 check "fails without didDoc" "1" "$?"
+
+echo "http_request failure detail:"
+# Exercises http_request against the real curl shim, which is what gives a
+# failed masto_/bsky_ call a status and body to report instead of nothing.
+# The shim's <slug>.status file drives the failure path -- see shims/curl.
+HTTP_FIXTURES="$(mktemp -d)"
+HTTP_CAPTURE="$(mktemp -d)"
+mkdir -p "${HTTP_FIXTURES}/_shared"
+printf '{"error":"rate limited"}' > "${HTTP_FIXTURES}/_shared/api_v1_statuses.json"
+printf '429' > "${HTTP_FIXTURES}/_shared/api_v1_statuses.status"
+
+(
+    export PATH="${LIB}/../../shims:$PATH"
+    export HARNESS_FIXTURES="$HTTP_FIXTURES" HARNESS_CAPTURE="$HTTP_CAPTURE" HARNESS_BOT="_none"
+    . "$LIB/core.sh"
+    http_request -X POST "https://mastodon.example/api/v1/statuses" > /tmp/botlib-http-out 2>/dev/null
+    printf '%s|%s|%s' "$?" "$BOTLIB_LAST_STATUS" "$BOTLIB_LAST_BODY"
+) > /tmp/botlib-http-result
+
+check "reports status and body on a 4xx" "1|429|{\"error\":\"rate limited\"}" \
+    "$(cat /tmp/botlib-http-result)"
+
+printf '{"id":"1"}' > "${HTTP_FIXTURES}/_shared/api_v1_statuses.json"
+rm -f "${HTTP_FIXTURES}/_shared/api_v1_statuses.status"
+
+(
+    export PATH="${LIB}/../../shims:$PATH"
+    export HARNESS_FIXTURES="$HTTP_FIXTURES" HARNESS_CAPTURE="$HTTP_CAPTURE" HARNESS_BOT="_none"
+    . "$LIB/core.sh"
+    out=$(http_request -X POST "https://mastodon.example/api/v1/statuses")
+    printf '%s|%s|%s|%s' "$?" "$out" "$BOTLIB_LAST_STATUS" "$BOTLIB_LAST_BODY"
+) > /tmp/botlib-http-result
+
+check "prints body and leaves status/body unset on success" '0|{"id":"1"}||' \
+    "$(cat /tmp/botlib-http-result)"
+
+rm -rf "$HTTP_FIXTURES" "$HTTP_CAPTURE" /tmp/botlib-http-out /tmp/botlib-http-result
 
 printf '\n%s passed, %s failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

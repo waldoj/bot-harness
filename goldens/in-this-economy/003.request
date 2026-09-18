@@ -1,0 +1,17 @@
+seq: 003
+method: POST
+host: bsky.social
+endpoint: /xrpc/com.atproto.repo.createRecord
+headers:
+  Authorization: <REDACTED>
+  Content-Type: application/json
+body:
+  {
+    "collection": "app.bsky.feed.post",
+    "record": {
+      "$type": "app.bsky.feed.post",
+      "createdAt": "2026-01-15T12:00:00Z",
+      "text": "Beauty AND the Beast? In this economy?"
+    },
+    "repo": "did:plc:testbotdid000000000000"
+  }

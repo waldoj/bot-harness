@@ -1,9 +1,6 @@
 seq: 004
-method: POST
+method: GET
 host: video.bsky.app
-endpoint: /xrpc/app.bsky.video.uploadVideo
+endpoint: /xrpc/app.bsky.video.getJobStatus
 headers:
   Authorization: <REDACTED>
-  Content-Type: video/mp4
-body:
-  @003.m4v

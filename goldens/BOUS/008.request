@@ -1,4 +1,9 @@
 seq: 008
-method: GET
-host: video.bsky.app
-endpoint: /xrpc/app.bsky.video.getJobStatus
+method: POST
+host: test.host.bsky.network
+endpoint: /xrpc/com.atproto.repo.uploadBlob
+headers:
+  Authorization: <REDACTED>
+  Content-Type: text/vtt
+body:
+  @30_men.vtt

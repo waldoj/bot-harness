@@ -1,9 +1,9 @@
 seq: 003
-method: GET
-host: bsky.social
-endpoint: /xrpc/com.atproto.server.getServiceAuth
+method: POST
+host: video.bsky.app
+endpoint: /xrpc/app.bsky.video.uploadVideo
 headers:
   Authorization: <REDACTED>
+  Content-Type: video/mp4
 body:
-  aud=did:web:test.host.bsky.network
-  lxm=com.atproto.repo.uploadBlob
+  @003.m4v

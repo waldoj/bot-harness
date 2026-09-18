@@ -20,7 +20,8 @@ HARNESS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_ROOT="${BOT_REPO_ROOT:-$HOME/Documents/Git}"
 SOURCE="${HARNESS_ROOT}/lib/botlib"
 
-ALL_BOTS="bot-vacation botgov BOUS covid-wastewater dreambot featuring-super-cat finds-you moonstriker rejected-plates"
+# shellcheck source=lib/bots.sh
+. "${HARNESS_ROOT}/lib/bots.sh"
 
 CHECK_ONLY="no"
 if [ "${1-}" = "--check" ]; then
